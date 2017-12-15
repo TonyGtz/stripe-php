@@ -2,15 +2,12 @@
 
 namespace Stripe;
 
-use ArrayAccess;
-use InvalidArgumentException;
-
 /**
  * Class StripeObject
  *
  * @package Stripe
  */
-class StripeObject implements ArrayAccess, JsonSerializable
+class StripeObject implements \ArrayAccess, JsonSerializable
 {
     /**
      * @var Util\Set Attributes that should not be sent to the API because
@@ -98,14 +95,14 @@ class StripeObject implements ArrayAccess, JsonSerializable
     public function __set($k, $v)
     {
         if (self::$permanentAttributes->includes($k)) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 "Cannot set $k on this object. HINT: you can't set: " .
                 join(', ', self::$permanentAttributes->toArray())
             );
         }
 
         if ($v === "") {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'You cannot set \''.$k.'\'to an empty string. '
                 .'We interpret empty strings as NULL in requests. '
                 .'You may set obj->'.$k.' = NULL to delete the property'
