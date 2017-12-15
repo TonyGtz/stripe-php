@@ -73,6 +73,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
     }
 
     protected $_opts;
+    protected $_originalValues;
     protected $_values;
     protected $_unsavedValues;
     protected $_transientValues;
@@ -82,6 +83,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
     public function __construct($id = null, $opts = null)
     {
         $this->_opts = $opts ? $opts : new Util\RequestOptions();
+        $this->_originalValues = array();
         $this->_values = array();
         $this->_unsavedValues = new Util\Set();
         $this->_transientValues = new Util\Set();
@@ -213,6 +215,8 @@ class StripeObject implements ArrayAccess, JsonSerializable
 
         $this->_opts = $opts;
 
+        $this->_originalValues = self::deepCopy($values);
+
         // Wipe old state before setting new.  This is useful for e.g. updating a
         // customer, where there is no persistent card parameter.  Mark those values
         // which don't persist as transient
@@ -305,6 +309,28 @@ class StripeObject implements ArrayAccess, JsonSerializable
             return Util\Util::convertStripeObjectToArray($this->_values);
         } else {
             return $this->_values;
+        }
+    }
+
+    /**
+     * Produces a deep copy of the given object including support for arrays
+     * and StripeObjects.
+     */
+    public static function deepCopy($obj)
+    {
+        if (is_array($obj)) {
+            $copy = array();
+            foreach ($obj as $k => $v) {
+                $copy[$k] = self::deepCopy($v);
+            }
+            return $copy;
+        } elseif ($obj instanceof StripeObject) {
+            return $obj::constructFrom(
+                self::deepCopy($obj->_values),
+                $obj->_opts
+            );
+        } else {
+            return $obj;
         }
     }
 }

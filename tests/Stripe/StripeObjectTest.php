@@ -186,4 +186,71 @@ class StripeObjectTest extends TestCase
         $obj->metadata = array('baz' => 'foo');
         $this->assertSame(array('metadata' => array('bar' => '', 'baz' => 'foo')), $obj->serializeParameters());
     }
+
+    public function testDeepCopy()
+    {
+        // This is used to access the `_opts` protected variable
+        $optsReflector = new \ReflectionProperty('Stripe\\StripeObject', '_opts');
+        $optsReflector->setAccessible(true);
+
+        $opts = array(
+            "api_base" => Stripe::$apiBase,
+            "api_key" => "apikey",
+        );
+        $values = array(
+            "id" => 1,
+            "name" => "Stripe",
+            "arr" => array(
+                StripeObject::constructFrom(array("id" => "index0"), $opts),
+                "index1",
+                2,
+            ),
+            "map" => array(
+                "0" => StripeObject::constructFrom(array("id" => "index0"), $opts),
+                "1" => "index1",
+                "2" => 2
+            ),
+        );
+
+        $copyValues = StripeObject::deepCopy($values);
+
+        // we can't compare the hashes directly because they have embedded
+        // objects which are different from each other
+        $this->assertEquals($values["id"], $copyValues["id"]);
+        $this->assertEquals($values["name"], $copyValues["name"]);
+
+        $this->assertEquals(count($values["arr"]), count($copyValues["arr"]));
+
+        // internal values of the copied StripeObject should be the same
+        // (including opts), but the object itself should be new (hence the
+        // refutation of equality on #object_id)
+        $this->assertEquals($values["arr"][0]["id"], $copyValues["arr"][0]["id"]);
+        $this->assertNotSame($values["arr"][0], $copyValues["arr"][0]);
+        $this->assertEquals(
+            $optsReflector->getValue($values["arr"][0]),
+            $optsReflector->getValue($copyValues["arr"][0])
+        );
+
+        // scalars however, can be compared
+        $this->assertEquals($values["arr"][1], $copyValues["arr"][1]);
+        $this->assertEquals($values["arr"][2], $copyValues["arr"][2]);
+
+        // and a similar story with the hash
+        $this->assertEquals($values["map"]["0"]["id"], $copyValues["map"]["0"]["id"]);
+        $this->assertNotSame($values["map"]["0"], $copyValues["map"]["0"]);
+        $this->assertEquals(
+            $optsReflector->getValue($values["map"]["0"]),
+            $optsReflector->getValue($copyValues["map"]["0"])
+        );
+        $this->assertEquals($values["map"]["1"], $copyValues["map"]["1"]);
+        $this->assertEquals($values["map"]["2"], $copyValues["map"]["2"]);
+    }
+
+    public function testDeepCopyMaintainClass()
+    {
+        $charge = Charge::constructFrom(array("id" => 1), null);
+        $copyCharge = StripeObject::deepCopy($charge);
+
+        $this->assertEquals(get_class($charge), get_class($copyCharge));
+    }
 }
