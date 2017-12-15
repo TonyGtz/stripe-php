@@ -26,6 +26,15 @@ namespace Stripe;
  */
 class Customer extends ApiResource
 {
+    public static function getSavedNestedResources()
+    {
+        static $savedNestedResources = null;
+        if ($savedNestedResources === null) {
+            $savedNestedResources = new Util\Set(array('source'));
+        }
+        return $savedNestedResources;
+    }
+
     const PATH_SOURCES = '/sources';
 
     /**

@@ -20,12 +20,11 @@ abstract class Util
         if (!is_array($array)) {
             return false;
         }
-
-      // TODO: generally incorrect, but it's correct given Stripe's response
-        foreach (array_keys($array) as $k) {
-            if (!is_numeric($k)) {
-                return false;
-            }
+        if ($array === array()) {
+            return false;
+        }
+        if (array_keys($array) !== range(0, count($array) - 1)) {
+            return false;
         }
         return true;
     }

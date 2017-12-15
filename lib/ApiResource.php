@@ -9,6 +9,39 @@ namespace Stripe;
  */
 abstract class ApiResource extends StripeObject
 {
+    protected $_saveWithParent = false;
+
+    public function getSaveWithParent()
+    {
+        return $this->_saveWithParent;
+    }
+
+    protected function setSaveWithParent($save)
+    {
+        $this->_saveWithParent = $save;
+    }
+
+    public static function getSavedNestedResources()
+    {
+        static $savedNestedResources = null;
+        if ($savedNestedResources === null) {
+            $savedNestedResources = new Util\Set();
+        }
+        return $savedNestedResources;
+    }
+
+    public function __set($k, $v)
+    {
+        parent::__set($k, $v);
+        $v = parent::__get($k);
+
+        if (static::getSavedNestedResources()->includes($k)) {
+            $v->setSaveWithParent(true);
+        }
+
+        return $v;
+    }
+
     private static $HEADERS_TO_PERSIST = array('Stripe-Account' => true, 'Stripe-Version' => true);
 
     public static function baseUrl()

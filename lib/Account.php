@@ -37,6 +37,15 @@ namespace Stripe;
  */
 class Account extends ApiResource
 {
+    public static function getSavedNestedResources()
+    {
+        static $savedNestedResources = null;
+        if ($savedNestedResources === null) {
+            $savedNestedResources = new Util\Set(array('external_account', 'bank_account'));
+        }
+        return $savedNestedResources;
+    }
+
     const PATH_EXTERNAL_ACCOUNTS = '/external_accounts';
     const PATH_LOGIN_LINKS = '/login_links';
 
@@ -222,5 +231,49 @@ class Account extends ApiResource
     public static function createLoginLink($id, $params = null, $opts = null)
     {
         return self::_createNestedResource($id, static::PATH_LOGIN_LINKS, $params, $opts);
+    }
+
+    public function serializeParameters($force = false)
+    {
+        $update = parent::serializeParameters($force);
+        return $this->serializeParametersAccount($this, $update);
+    }
+
+    public function serializeParametersAccount($obj, $update)
+    {
+        if (array_key_exists("legal_entity", $this)) {
+            $entity = $this->legal_entity;
+            if (array_key_exists("additional_owners", $entity)) {
+                $owners = $entity->additional_owners;
+                $entity_update = array_key_exists("legal_entity", $update) ? $update["legal_entity"] : array();
+                $entity_update["additional_owners"] = $this->serializeAdditionalOwners($entity, $owners);
+                $update["legal_entity"] = $entity_update;
+            }
+        }
+        return $update;
+    }
+
+    private function serializeAdditionalOwners($legal_entity, $additional_owners)
+    {
+        if (array_key_exists("additional_owners", $legal_entity->_originalValues)) {
+            $original_value = $legal_entity->_originalValues["additional_owners"];
+            if (count($original_value) > count($additional_owners)) {
+                throw new InvalidArgumentException(
+                    "You cannot delete an item from an array, you must instead set a new array"
+                );
+            }
+        }
+
+        $update_params = array();
+        foreach ($additional_owners as $i => $v) {
+            $update = ($v instanceof StripeObject) ? $v->serializeParameters() : $v;
+
+            if ($update != array()) {
+                if ((!$original_value) || ($update != $legal_entity->serializeParamsValue($original_value[$i], null, false, true))) {
+                    $update_params[str($i)] = $update;
+                }
+            }
+        }
+        return $update_params;
     }
 }
