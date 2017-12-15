@@ -194,6 +194,18 @@ class StripeObjectTest extends TestCase
         $this->assertSame(array('metadata' => array('bar' => '', 'baz' => 'foo')), $obj->serializeParameters());
     }
 
+    public function testDirty()
+    {
+        $obj = StripeObject::constructFrom(array(
+            'id' => 'id',
+            'metadata' => AttachedObject::constructFrom(array(
+                'bar' => 'foo',
+            )),
+        ));
+        $obj->dirty();
+        $this->assertSame(array('id' => 'id', 'metadata' => array('bar' => 'foo')), $obj->serializeParameters());
+    }
+
     public function testDeepCopy()
     {
         // This is used to invoke the `deepCopy` protected function

@@ -232,15 +232,32 @@ class StripeObject implements ArrayAccess, JsonSerializable
             unset($this->$k);
         }
 
+        $this->updateAttributes($values, $opts, false);
+        foreach ($values as $k => $v) {
+            $this->_transientValues->discard($k);
+            $this->_unsavedValues->discard($k);
+        }
+    }
+
+    /**
+     * Mass assigns attributes on the model.
+     *
+     * @param array $values
+     * @param null|string|array|Util\RequestOptions $opts
+     * @param boolean $dirty Defaults to true.
+     */
+    public function updateAttributes($values, $opts, $dirty = true)
+    {
         foreach ($values as $k => $v) {
             if (self::$nestedUpdatableAttributes->includes($k) && is_array($v)) {
                 $this->_values[$k] = AttachedObject::constructFrom($v, $opts);
             } else {
                 $this->_values[$k] = Util\Util::convertToStripeObject($v, $opts);
             }
-
-            $this->_transientValues->discard($k);
-            $this->_unsavedValues->discard($k);
+            if ($dirty) {
+                $this->dirtyValue($this->_values[$k]);
+            }
+            $this->_unsavedValues->add($k);
         }
     }
 
@@ -303,6 +320,31 @@ class StripeObject implements ArrayAccess, JsonSerializable
             return Util\Util::convertStripeObjectToArray($this->_values);
         } else {
             return $this->_values;
+        }
+    }
+
+    /**
+     * Sets all keys within the StripeObject as unsaved so that they will be
+     * included with an update when `serializeParameters` is called. This
+     * method is also recursive, so any StripeObjects contained as values or
+     * which are values in a tenant array are also marked as dirty.
+     */
+    public function dirty()
+    {
+        $this->_unsavedValues = new Util\Set(array_keys($this->_values));
+        foreach ($this->_values as $k => $v) {
+            $this->dirtyValue($v);
+        }
+    }
+
+    protected function dirtyValue($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as $v) {
+                $this->dirtyValue($v);
+            }
+        } elseif ($value instanceof StripeObject) {
+            $value->dirty();
         }
     }
 
