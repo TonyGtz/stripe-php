@@ -301,6 +301,28 @@ class StripeObject implements ArrayAccess, JsonSerializable
             return $this->_values;
         }
     }
+
+    /**
+     * Produces a deep copy of the given object including support for arrays
+     * and StripeObjects.
+     */
+    protected static function deepCopy($obj)
+    {
+        if (is_array($obj)) {
+            $copy = array();
+            foreach ($obj as $k => $v) {
+                $copy[$k] = self::deepCopy($v);
+            }
+            return $copy;
+        } elseif ($obj instanceof StripeObject) {
+            return $obj::constructFrom(
+                self::deepCopy($obj->_values),
+                clone $obj->_opts
+            );
+        } else {
+            return $obj;
+        }
+    }
 }
 
 StripeObject::init();
