@@ -131,8 +131,8 @@ class StripeObjectTest extends TestCase
             'metadata' => StripeObject::constructFrom(array(
                 'bar' => null,
                 'baz' => null,
-            ), new Util\RequestOptions()),
-        ), new Util\RequestOptions());
+            )),
+        ));
         $obj->metadata->bar = 'newbar';
         $this->assertSame(array('metadata' => array('bar' => 'newbar')), $obj->serializeParameters());
     }
@@ -141,7 +141,7 @@ class StripeObjectTest extends TestCase
     {
         $obj = StripeObject::constructFrom(array(
             'foo' => null,
-        ), new Util\RequestOptions());
+        ));
         $obj->foo = array('new-value');
         $this->assertSame(array('foo' => array('new-value')), $obj->serializeParameters());
     }
@@ -150,7 +150,7 @@ class StripeObjectTest extends TestCase
     {
         $obj = StripeObject::constructFrom(array(
             'foo' => array('0-index', '1-index', '2-index'),
-        ), new Util\RequestOptions());
+        ));
         $obj->foo = array('new-value');
         $this->assertSame(array('foo' => array('new-value')), $obj->serializeParameters());
     }
@@ -159,7 +159,7 @@ class StripeObjectTest extends TestCase
     {
         $obj = StripeObject::constructFrom(array(
             'foo' => array('0-index', '1-index', '2-index'),
-        ), new Util\RequestOptions());
+        ));
         $obj->foo = array_fill(0, 4, 'new-value');
         $this->assertSame(array('foo' => array_fill(0, 4, 'new-value')), $obj->serializeParameters());
     }
@@ -168,9 +168,9 @@ class StripeObjectTest extends TestCase
     {
         $obj = StripeObject::constructFrom(array(
             'additional_owners' => array(
-                StripeObject::constructFrom(array('bar' => null), new Util\RequestOptions())
+                StripeObject::constructFrom(array('bar' => null))
             ),
-        ), new Util\RequestOptions());
+        ));
         $obj->additional_owners[0]->bar = 'baz';
         $this->assertSame(array('additional_owners' => array(array('bar' => 'baz'))), $obj->serializeParameters());
     }
@@ -179,7 +179,7 @@ class StripeObjectTest extends TestCase
     {
         $obj = StripeObject::constructFrom(array(
             'foo' => null,
-        ), new Util\RequestOptions());
+        ));
         $this->assertSame(array(), $obj->serializeParameters());
     }
 
@@ -188,8 +188,8 @@ class StripeObjectTest extends TestCase
         $obj = StripeObject::constructFrom(array(
             'metadata' => AttachedObject::constructFrom(array(
                 'bar' => 'foo',
-            ), new Util\RequestOptions()),
-        ), new Util\RequestOptions());
+            )),
+        ));
         $obj->metadata = array('baz' => 'foo');
         $this->assertSame(array('metadata' => array('bar' => '', 'baz' => 'foo')), $obj->serializeParameters());
     }

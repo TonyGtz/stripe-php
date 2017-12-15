@@ -83,7 +83,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
     public function __construct($id = null, $opts = null)
     {
         list($id, $this->_retrieveOptions) = Util\Util::normalizeId($id);
-        $this->_opts = $opts ?: new Util\RequestOptions();
+        $this->_opts = Util\RequestOptions::parse($opts);
         $this->_values = array();
         $this->_unsavedValues = new Util\Set();
         $this->_transientValues = new Util\Set();
@@ -193,11 +193,11 @@ class StripeObject implements ArrayAccess, JsonSerializable
      * This unfortunately needs to be public to be used in Util\Util
      *
      * @param array $values
-     * @param array $opts
+     * @param null|string|array|Util\RequestOptions $opts
      *
      * @return StripeObject The object constructed from the given values.
      */
-    public static function constructFrom($values, $opts)
+    public static function constructFrom($values, $opts = null)
     {
         $obj = new static(isset($values['id']) ? $values['id'] : null);
         $obj->refreshFrom($values, $opts);
@@ -208,16 +208,12 @@ class StripeObject implements ArrayAccess, JsonSerializable
      * Refreshes this object using the provided values.
      *
      * @param array $values
-     * @param array|Util\RequestOptions $opts
+     * @param null|string|array|Util\RequestOptions $opts
      * @param boolean $partial Defaults to false.
      */
     public function refreshFrom($values, $opts, $partial = false)
     {
-        if (is_array($opts)) {
-            $opts = Util\RequestOptions::parse($opts);
-        }
-
-        $this->_opts = $opts;
+        $this->_opts = Util\RequestOptions::parse($opts);
 
         // Wipe old state before setting new.  This is useful for e.g. updating a
         // customer, where there is no persistent card parameter.  Mark those values

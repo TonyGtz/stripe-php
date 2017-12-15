@@ -62,10 +62,7 @@ class SourceTest extends TestCase
                 'exp_year' => 2019,
             ),
         );
-        $source = Source::constructFrom(
-            $response,
-            new Util\RequestOptions()
-        );
+        $source = Source::constructFrom($response);
 
         $response['card']['exp_month'] = 12;
         $response['card']['exp_year'] = 2022;

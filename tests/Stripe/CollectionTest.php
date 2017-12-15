@@ -13,7 +13,7 @@ class CollectionTest extends TestCase
             'data' => array(array('id' => 1)),
             'has_more' => true,
             'url' => '/things',
-        ), new Util\RequestOptions());
+        ));
     }
 
     public function testCanList()
