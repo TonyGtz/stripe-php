@@ -221,4 +221,16 @@ abstract class Util
 
         return implode("&", $r);
     }
+
+    public static function normalizeId($id)
+    {
+        if (is_array($id)) {
+            $params = $id;
+            $id = $params['id'];
+            unset($params['id']);
+        } else {
+            $params = array();
+        }
+        return array($id, $params);
+    }
 }

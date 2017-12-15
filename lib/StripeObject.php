@@ -82,21 +82,11 @@ class StripeObject implements ArrayAccess, JsonSerializable
 
     public function __construct($id = null, $opts = null)
     {
+        list($id, $this->_retrieveOptions) = Util\Util::normalizeId($id);
         $this->_opts = $opts ?: new Util\RequestOptions();
         $this->_values = array();
         $this->_unsavedValues = new Util\Set();
         $this->_transientValues = new Util\Set();
-
-        $this->_retrieveOptions = array();
-        if (is_array($id)) {
-            foreach ($id as $key => $value) {
-                if ($key != 'id') {
-                    $this->_retrieveOptions[$key] = $value;
-                }
-            }
-            $id = $id['id'];
-        }
-
         if ($id !== null) {
             $this->_values['id'] = $id;
         }
