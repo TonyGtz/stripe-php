@@ -25,7 +25,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
 
     public static function init()
     {
-        self::$permanentAttributes = new Util\Set(array('_opts', 'id'));
+        self::$permanentAttributes = new Util\Set(array('id'));
         self::$nestedUpdatableAttributes = new Util\Set(array(
             // Numbers are in place for indexes in an `additional_owners` array.
             //
@@ -99,43 +99,43 @@ class StripeObject implements ArrayAccess, JsonSerializable
         }
 
         if ($id !== null) {
-            $this->id = $id;
+            $this->_values["id"] = $id;
         }
     }
 
     // Standard accessor magic methods
     public function __set($k, $v)
     {
+        if (self::$permanentAttributes->includes($k)) {
+            throw new InvalidArgumentException(
+                'You cannot set \''.$k.'\' as it\'s a permanent attribute.'
+            );
+        }
+
         if ($v === "") {
             throw new InvalidArgumentException(
-                'You cannot set \''.$k.'\'to an empty string. '
+                'You cannot set \''.$k.'\' to an empty string. '
                 .'We interpret empty strings as NULL in requests. '
                 .'You may set obj->'.$k.' = NULL to delete the property'
             );
         }
-
-        if (self::$nestedUpdatableAttributes->includes($k)
-                && isset($this->$k) && $this->$k instanceof AttachedObject && is_array($v)) {
-            $this->$k->replaceWith($v);
-        } else {
-            // TODO: may want to clear from $_transientValues (Won't be user-visible).
-            $this->_values[$k] = $v;
-        }
-        if (!self::$permanentAttributes->includes($k)) {
-            $this->_unsavedValues->add($k);
-        }
+        $this->_values[$k] = Util\Util::convertToStripeObject($v, $this->_opts);
+        $this->dirtyValue($this->_values[$k]);
+        $this->_unsavedValues->add($k);
     }
 
     public function __isset($k)
     {
         return isset($this->_values[$k]);
     }
+
     public function __unset($k)
     {
         unset($this->_values[$k]);
         $this->_transientValues->add($k);
         $this->_unsavedValues->discard($k);
     }
+
     public function &__get($k)
     {
         // function should return a reference, using $nullval to return a reference to null
@@ -309,6 +309,31 @@ class StripeObject implements ArrayAccess, JsonSerializable
             return Util\Util::convertStripeObjectToArray($this->_values);
         } else {
             return $this->_values;
+        }
+    }
+
+    /**
+     * Sets all keys within the StripeObject as unsaved so that they will be
+     * included with an update when `serializeParams` is called. This method is
+     * also recursive, so any StripeObjects contained as values or which are
+     * values in a tenant array are also marked as dirty.
+     */
+    public function dirty()
+    {
+        $this->_unsavedValues = new Util\Set(array_keys($this->_values));
+        foreach ($this->_values as $k => $v) {
+            $this->dirtyValue($v);
+        }
+    }
+
+    protected function dirtyValue($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as $v) {
+                $this->dirtyValue($v);
+            }
+        } elseif ($value instanceof StripeObject) {
+            $value->dirty();
         }
     }
 
