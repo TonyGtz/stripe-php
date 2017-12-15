@@ -34,7 +34,7 @@ class SourceTest extends TestCase
         $resource->metadata["key"] = "value";
         $this->expectsRequest(
             'post',
-            '/v1/sources/' . self::TEST_RESOURCE_ID
+            '/v1/sources/' . $resource->id
         );
         $resource->save();
         $this->assertSame("Stripe\\Source", get_class($resource));
@@ -97,7 +97,7 @@ class SourceTest extends TestCase
         $resource->customer = "cus_123";
         $this->expectsRequest(
             'delete',
-            '/v1/customers/cus_123/sources/' . self::TEST_RESOURCE_ID
+            '/v1/customers/cus_123/sources/' . $resource->id
         );
         $resource->delete();
         $this->assertSame("Stripe\\Source", get_class($resource));
@@ -129,7 +129,7 @@ class SourceTest extends TestCase
         $resource = Source::retrieve(self::TEST_RESOURCE_ID);
         $this->expectsRequest(
             'post',
-            '/v1/sources/' . self::TEST_RESOURCE_ID . "/verify"
+            '/v1/sources/' . $resource->id . "/verify"
         );
         $resource->verify(array("values" => array(32,45)));
         $this->assertSame("Stripe\\Source", get_class($resource));

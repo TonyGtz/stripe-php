@@ -97,13 +97,20 @@ class StripeObject implements ArrayAccess, JsonSerializable
         }
 
         if ($id !== null) {
-            $this->id = $id;
+            $this->_values['id'] = $id;
         }
     }
 
     // Standard accessor magic methods
     public function __set($k, $v)
     {
+        if (self::$permanentAttributes->includes($k)) {
+            throw new InvalidArgumentException(
+                "Cannot set $k on this object. HINT: you can't set: " .
+                join(', ', self::$permanentAttributes->toArray())
+            );
+        }
+
         if ($v === "") {
             throw new InvalidArgumentException(
                 'You cannot set \''.$k.'\'to an empty string. '
@@ -223,18 +230,10 @@ class StripeObject implements ArrayAccess, JsonSerializable
         }
 
         foreach ($removed as $k) {
-            if (self::$permanentAttributes->includes($k)) {
-                continue;
-            }
-
             unset($this->$k);
         }
 
         foreach ($values as $k => $v) {
-            if (self::$permanentAttributes->includes($k) && isset($this[$k])) {
-                continue;
-            }
-
             if (self::$nestedUpdatableAttributes->includes($k) && is_array($v)) {
                 $this->_values[$k] = AttachedObject::constructFrom($v, $opts);
             } else {

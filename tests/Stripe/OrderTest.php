@@ -45,7 +45,7 @@ class OrderTest extends TestCase
         $resource->metadata["key"] = "value";
         $this->expectsRequest(
             'post',
-            '/v1/orders/' . self::TEST_RESOURCE_ID
+            '/v1/orders/' . $resource->id
         );
         $resource->save();
         $this->assertSame("Stripe\\Order", get_class($resource));
@@ -68,7 +68,7 @@ class OrderTest extends TestCase
         $resource = Order::retrieve(self::TEST_RESOURCE_ID);
         $this->expectsRequest(
             'post',
-            '/v1/orders/' . self::TEST_RESOURCE_ID . '/pay'
+            '/v1/orders/' . $resource->id . '/pay'
         );
         $resource->pay();
         $this->assertSame("Stripe\\Order", get_class($resource));
@@ -79,7 +79,7 @@ class OrderTest extends TestCase
         $order = Order::retrieve(self::TEST_RESOURCE_ID);
         $this->expectsRequest(
             'post',
-            '/v1/orders/' . self::TEST_RESOURCE_ID . '/returns'
+            '/v1/orders/' . $order->id . '/returns'
         );
         $resource = $order->returnOrder();
         $this->assertSame("Stripe\\OrderReturn", get_class($resource));

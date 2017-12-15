@@ -44,7 +44,7 @@ class CustomerTest extends TestCase
         $resource->metadata["key"] = "value";
         $this->expectsRequest(
             'post',
-            '/v1/customers/' . self::TEST_RESOURCE_ID
+            '/v1/customers/' . $resource->id
         );
         $resource->save();
         $this->assertSame("Stripe\\Customer", get_class($resource));
@@ -67,7 +67,7 @@ class CustomerTest extends TestCase
         $resource = Customer::retrieve(self::TEST_RESOURCE_ID);
         $this->expectsRequest(
             'delete',
-            '/v1/customers/' . self::TEST_RESOURCE_ID
+            '/v1/customers/' . $resource->id
         );
         $resource->delete();
         $this->assertSame("Stripe\\Customer", get_class($resource));

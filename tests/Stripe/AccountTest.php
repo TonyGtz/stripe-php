@@ -54,7 +54,7 @@ class AccountTest extends TestCase
         $resource->metadata["key"] = "value";
         $this->expectsRequest(
             'post',
-            '/v1/accounts/' . self::TEST_RESOURCE_ID
+            '/v1/accounts/' . $resource->id
         );
         $resource->save();
         $this->assertSame("Stripe\\Account", get_class($resource));
@@ -77,7 +77,7 @@ class AccountTest extends TestCase
         $resource = Account::retrieve(self::TEST_RESOURCE_ID);
         $this->expectsRequest(
             'delete',
-            '/v1/accounts/' . self::TEST_RESOURCE_ID
+            '/v1/accounts/' . $resource->id
         );
         $resource->delete();
         $this->assertSame("Stripe\\Account", get_class($resource));

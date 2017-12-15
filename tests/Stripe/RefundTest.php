@@ -45,7 +45,7 @@ class RefundTest extends TestCase
         $resource->metadata["key"] = "value";
         $this->expectsRequest(
             'post',
-            '/v1/refunds/' . self::TEST_RESOURCE_ID
+            '/v1/refunds/' . $resource->id
         );
         $resource->save();
         $this->assertSame("Stripe\\Refund", get_class($resource));
