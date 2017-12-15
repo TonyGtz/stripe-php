@@ -74,6 +74,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
     }
 
     protected $_opts;
+    protected $_originalValues;
     protected $_values;
     protected $_unsavedValues;
     protected $_transientValues;
@@ -84,6 +85,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
     {
         list($id, $this->_retrieveOptions) = Util\Util::normalizeId($id);
         $this->_opts = Util\RequestOptions::parse($opts);
+        $this->_originalValues = array();
         $this->_values = array();
         $this->_unsavedValues = new Util\Set();
         $this->_transientValues = new Util\Set();
@@ -214,6 +216,8 @@ class StripeObject implements ArrayAccess, JsonSerializable
     public function refreshFrom($values, $opts, $partial = false)
     {
         $this->_opts = Util\RequestOptions::parse($opts);
+
+        $this->_originalValues = self::deepCopy($values);
 
         // Wipe old state before setting new.  This is useful for e.g. updating a
         // customer, where there is no persistent card parameter.  Mark those values
