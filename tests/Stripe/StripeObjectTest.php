@@ -34,6 +34,18 @@ class StripeObjectTest extends TestCase
         $this->assertSame($s->bar, 'b');
     }
 
+    public function testCount()
+    {
+        $s = new StripeObject();
+        $this->assertSame(0, count($s));
+
+        $s['key1'] = 'value1';
+        $this->assertSame(1, count($s));
+
+        $s['key2'] = 'value2';
+        $this->assertSame(2, count($s));
+    }
+
     public function testKeys()
     {
         $s = new StripeObject();

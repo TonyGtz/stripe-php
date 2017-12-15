@@ -7,7 +7,7 @@ namespace Stripe;
  *
  * @package Stripe
  */
-class StripeObject implements \ArrayAccess, JsonSerializable
+class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
 {
     /**
      * @var Util\Set Attributes that should not be sent to the API because
@@ -176,6 +176,12 @@ class StripeObject implements \ArrayAccess, JsonSerializable
     public function offsetGet($k)
     {
         return array_key_exists($k, $this->_values) ? $this->_values[$k] : null;
+    }
+
+    // Countable method
+    public function count()
+    {
+        return count($this->_values);
     }
 
     public function keys()
