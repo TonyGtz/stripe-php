@@ -194,6 +194,11 @@ class StripeObject implements ArrayAccess, JsonSerializable
         return array_keys($this->_values);
     }
 
+    public function values()
+    {
+        return array_values($this->_values);
+    }
+
     /**
      * This unfortunately needs to be public to be used in Util\Util
      *
