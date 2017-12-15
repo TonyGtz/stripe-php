@@ -17,6 +17,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
      *    they're not updatable (e.g. API key, ID).
      */
     public static $permanentAttributes;
+
     /**
      * @var Util\Set Attributes that are nested but still updatable from
      *    the parent class's URL (e.g. metadata).
@@ -81,7 +82,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
 
     public function __construct($id = null, $opts = null)
     {
-        $this->_opts = $opts ? $opts : new Util\RequestOptions();
+        $this->_opts = $opts ?: new Util\RequestOptions();
         $this->_values = array();
         $this->_unsavedValues = new Util\Set();
         $this->_transientValues = new Util\Set();
@@ -135,12 +136,14 @@ class StripeObject implements ArrayAccess, JsonSerializable
     {
         return isset($this->_values[$k]);
     }
+
     public function __unset($k)
     {
         unset($this->_values[$k]);
         $this->_transientValues->add($k);
         $this->_unsavedValues->discard($k);
     }
+
     public function &__get($k)
     {
         // function should return a reference, using $nullval to return a reference to null
@@ -180,6 +183,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
     {
         unset($this->$k);
     }
+
     public function offsetGet($k)
     {
         return array_key_exists($k, $this->_values) ? $this->_values[$k] : null;
@@ -226,10 +230,10 @@ class StripeObject implements ArrayAccess, JsonSerializable
         if ($partial) {
             $removed = new Util\Set();
         } else {
-            $removed = array_diff(array_keys($this->_values), array_keys($values));
+            $removed = new Util\Set(array_diff(array_keys($this->_values), array_keys($values)));
         }
 
-        foreach ($removed as $k) {
+        foreach ($removed->toArray() as $k) {
             unset($this->$k);
         }
 
