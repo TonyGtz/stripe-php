@@ -25,7 +25,7 @@ class StripeObject implements ArrayAccess, JsonSerializable
 
     public static function init()
     {
-        self::$permanentAttributes = new Util\Set(array('_opts', 'id'));
+        self::$permanentAttributes = new Util\Set(array('id'));
         self::$nestedUpdatableAttributes = new Util\Set(array(
             // Numbers are in place for indexes in an `additional_owners` array.
             //
