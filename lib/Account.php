@@ -37,6 +37,18 @@ namespace Stripe;
  */
 class Account extends ApiResource
 {
+    public static function getSavedNestedResources()
+    {
+        static $savedNestedResources = null;
+        if ($savedNestedResources === null) {
+            $savedNestedResources = new Util\Set(array(
+                'external_account',
+                'bank_account',
+            ));
+        }
+        return $savedNestedResources;
+    }
+
     const PATH_EXTERNAL_ACCOUNTS = '/external_accounts';
     const PATH_LOGIN_LINKS = '/login_links';
 

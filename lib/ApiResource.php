@@ -9,6 +9,15 @@ namespace Stripe;
  */
 abstract class ApiResource extends StripeObject
 {
+    public static function getSavedNestedResources()
+    {
+        static $savedNestedResources = null;
+        if ($savedNestedResources === null) {
+            $savedNestedResources = new Util\Set();
+        }
+        return $savedNestedResources;
+    }
+
     private static $HEADERS_TO_PERSIST = array('Stripe-Account' => true, 'Stripe-Version' => true);
 
     public static function baseUrl()
@@ -24,6 +33,16 @@ abstract class ApiResource extends StripeObject
      * replacing a customer's source for example, where this is allowed.
      */
     public $saveWithParent = false;
+
+    public function __set($k, $v)
+    {
+        parent::__set($k, $v);
+        $v = parent::__get($k);
+        if (static::getSavedNestedResources()->includes($k)) {
+            $v->saveWithParent = true;
+        }
+        return $v;
+    }
 
     /**
      * @return ApiResource The refreshed resource.

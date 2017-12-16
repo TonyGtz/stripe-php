@@ -9,6 +9,17 @@ namespace Stripe;
  */
 class Subscription extends ApiResource
 {
+    public static function getSavedNestedResources()
+    {
+        static $savedNestedResources = null;
+        if ($savedNestedResources === null) {
+            $savedNestedResources = new Util\Set(array(
+                'source',
+            ));
+        }
+        return $savedNestedResources;
+    }
+
     /**
      * These constants are possible representations of the status field.
      *
