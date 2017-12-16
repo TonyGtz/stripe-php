@@ -10,14 +10,18 @@ namespace Stripe;
 class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
 {
     /**
-     * @var Util\Set Attributes that should not be sent to the API because
-     *    they're not updatable (e.g. API key, ID).
+     * @return Util\Set Attributes that should not be sent to the API because
+     *    they're not updatable (e.g. ID).
      */
-    public static $permanentAttributes;
-
-    public static function init()
+    public static function getPermanentAttributes()
     {
-        self::$permanentAttributes = new Util\Set(array('id'));
+        static $permanentAttributes = null;
+        if ($permanentAttributes === null) {
+            $permanentAttributes = new Util\Set(array(
+                'id',
+            ));
+        }
+        return $permanentAttributes;
     }
 
     /**
@@ -62,10 +66,10 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
     // Standard accessor magic methods
     public function __set($k, $v)
     {
-        if (self::$permanentAttributes->includes($k)) {
+        if (static::getPermanentAttributes()->includes($k)) {
             throw new \InvalidArgumentException(
                 "Cannot set $k on this object. HINT: you can't set: " .
-                join(', ', self::$permanentAttributes->toArray())
+                join(', ', static::getPermanentAttributes()->toArray())
             );
         }
 
@@ -424,5 +428,3 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
         return $update;
     }
 }
-
-StripeObject::init();
