@@ -257,7 +257,12 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
 
         // a `null` that makes it out of `serializeParamsValue` signals an empty
         // value that we shouldn't appear in the serialized form of the object
-        $updateParams = array_filter($updateParams, function($v) { return $v !== null; });
+        $updateParams = array_filter(
+            $updateParams,
+            function ($v) {
+                return $v !== null;
+            }
+        );
 
         return $updateParams;
     }
@@ -265,10 +270,6 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
 
     public function serializeParamsValue($value, $original, $unsaved, $force, $key = null)
     {
-        if ($value === null) {
-            return "";
-        }
-
         // The logic here is that essentially any object embedded in another
         // object that had a `type` is actually an API resource of a different
         // type that's been included in the response. These other resources must
@@ -291,7 +292,9 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
         // We throw an error if a property was set explicitly but we can't do
         // anything with it because the integration is probably not working as the
         // user intended it to.
-        elseif (($value instanceof APIResource) && !($value->saveWithParent)) {
+        if ($value === null) {
+            return "";
+        } elseif (($value instanceof APIResource) && (!$value->saveWithParent)) {
             if (!$unsaved) {
                 return null;
             } elseif (isset($value->id)) {
@@ -302,13 +305,13 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
                     "appear to be persisted and is not marked as `saveWithParent`."
                 );
             }
-        }
-
-        elseif (is_array($value)) {
+        } elseif (is_array($value)) {
             if (Util\Util::isList($value)) {
                 // Sequential array, i.e. a list
                 $update = array_map(
-                    function($v) use ($force) { return $this->serializeParamsValue($v, null, true, $force); },
+                    function ($v) use ($force) {
+                        return $this->serializeParamsValue($v, null, true, $force);
+                    },
                     $value
                 );
                 // This prevents an array that's unchanged from being resent.
@@ -319,14 +322,12 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
                 // Associative array, i.e. a map
                 return Util\Util::convertToStripeObject($value, $this->_opts)->serializeParameters();
             }
-
         } elseif ($value instanceof StripeObject) {
             $update = $value->serializeParameters($force);
             if ($original && $unsaved) {
                 $update = array_merge(self::emptyValues($original), $update);
             }
             return $update;
-
         } else {
             return $value;
         }
