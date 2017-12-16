@@ -44,6 +44,9 @@ class StripeObjectTest extends TestCase
 
         $s['key2'] = 'value2';
         $this->assertSame(2, count($s));
+
+        unset($s['key1']);
+        $this->assertSame(1, count($s));
     }
 
     public function testKeys()
@@ -124,9 +127,9 @@ class StripeObjectTest extends TestCase
         $this->assertSame($s->metadata, array('baz', 'qux'));
     }
 
-    public function testSerializeParametersEmptyObject()
+    public function testSerializeParametersOnEmptyObject()
     {
-        $obj = new StripeObject();
+        $obj = StripeObject::constructFrom(array());
         $this->assertSame(array(), $obj->serializeParameters());
     }
 
@@ -137,16 +140,23 @@ class StripeObjectTest extends TestCase
         $this->assertSame(array('metadata' => array('foo' => 'bar')), $obj->serializeParameters());
     }
 
+    public function testSerializeParametersOnBasicObject()
+    {
+        $obj = StripeObject::constructFrom(array('foo' => null));
+        $obj->updateAttributes(array('foo' => 'bar'));
+        $this->assertSame(array('foo' => 'bar'), $obj->serializeParameters());
+    }
+
     public function testSerializeParametersOnMoreComplexObject()
     {
         $obj = StripeObject::constructFrom(array(
-            'metadata' => StripeObject::constructFrom(array(
+            'foo' => StripeObject::constructFrom(array(
                 'bar' => null,
                 'baz' => null,
             )),
         ));
-        $obj->metadata->bar = 'newbar';
-        $this->assertSame(array('metadata' => array('bar' => 'newbar')), $obj->serializeParameters());
+        $obj->foo->bar = 'newbar';
+        $this->assertSame(array('foo' => array('bar' => 'newbar')), $obj->serializeParameters());
     }
 
     public function testSerializeParametersOnArray()
@@ -178,13 +188,13 @@ class StripeObjectTest extends TestCase
 
     public function testSerializeParametersOnArrayOfHashes()
     {
-        $obj = StripeObject::constructFrom(array(
-            'additional_owners' => array(
-                StripeObject::constructFrom(array('bar' => null))
-            ),
-        ));
-        $obj->additional_owners[0]->bar = 'baz';
-        $this->assertSame(array('additional_owners' => array(array('bar' => 'baz'))), $obj->serializeParameters());
+        $obj = StripeObject::constructFrom(array('foo' => null));
+        $obj->foo = array(
+            StripeObject::constructFrom(array('bar' => null)),
+        );
+
+        $obj->foo[0]->bar = 'baz';
+        $this->assertSame(array('foo' => array(array('bar' => 'baz'))), $obj->serializeParameters());
     }
 
     public function testSerializeParametersDoesNotIncludeUnchangedValues()
@@ -195,27 +205,131 @@ class StripeObjectTest extends TestCase
         $this->assertSame(array(), $obj->serializeParameters());
     }
 
-    public function testSerializeParametersOnReplacedAttachedObject()
+    public function testSerializeParametersOnUnchangedArray()
     {
         $obj = StripeObject::constructFrom(array(
-            'metadata' => AttachedObject::constructFrom(array(
+            'foo' => array('0-index', '1-index', '2-index'),
+        ));
+        $obj->foo = array('0-index', '1-index', '2-index');
+        $this->assertSame(array(), $obj->serializeParameters());
+    }
+
+    public function testSerializeParametersWithStripeObject()
+    {
+        $obj = StripeObject::constructFrom(array());
+        $obj->metadata = StripeObject::constructFrom(array('foo' => 'bar'));
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array('foo' => 'bar'), $serialized['metadata']);
+    }
+
+    public function testSerializeParametersOnReplacedStripeObject()
+    {
+        $obj = StripeObject::constructFrom(array(
+            'metadata' => StripeObject::constructFrom(array('bar' => 'foo')),
+        ));
+        $obj->metadata = StripeObject::constructFrom(array('baz' => 'foo'));
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array('bar' => '', 'baz' => 'foo'), $serialized['metadata']);
+    }
+
+    public function testSerializeParametersOnArrayOfStripeObjects()
+    {
+        $obj = StripeObject::constructFrom(array());
+        $obj->metadata = array(
+            StripeObject::constructFrom(array('foo' => 'bar')),
+        );
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array(array('foo' => 'bar')), $serialized['metadata']);
+    }
+
+    public function testSerializeParametersOnSetApiResource()
+    {
+        $customer = Customer::constructFrom(array('id' => 'cus_123'));
+        $obj = StripeObject::constructFrom(array());
+
+        // the key here is that the property is set explicitly (and therefore
+        // marked as unsaved), which is why it gets included below
+        $obj->customer = $customer;
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array('customer' => $customer), $serialized);
+    }
+
+    public function testSerializeParametersOnNotSetApiResource()
+    {
+        $customer = Customer::constructFrom(array('id' => 'cus_123'));
+        $obj = StripeObject::constructFrom(array('customer' => $customer));
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array(), $serialized);
+    }
+
+    public function testSerializeParametersOnApiResourceFlaggedWithSaveWithParent()
+    {
+        $customer = Customer::constructFrom(array('id' => 'cus_123'));
+        $customer->saveWithParent = true;
+
+        $obj = StripeObject::constructFrom(array('customer' => $customer));
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array('customer' => array()), $serialized);
+    }
+
+    public function testSerializeParametersRaisesExceotionOnOtherEmbeddedApiResources()
+    {
+        // This customer doesn't have an ID and therefore the library doesn't know
+        // what to do with it and throws an InvalidArgumentException because it's
+        // probably not what the user expected to happen.
+        $customer = Customer::constructFrom(array());
+
+        $obj = StripeObject::constructFrom(array());
+        $obj->customer = $customer;
+
+        try {
+            $serialized = $obj->serializeParameters();
+            $this->fail("Did not raise error");
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame(
+                "Cannot save property `customer` containing an API resource. " .
+                "It doesn't appear to be persisted and is not marked as `saveWithParent`.",
+                $e->getMessage()
+            );
+        } catch (\Exception $e) {
+            $this->fail("Unexpected exception: " . get_class($e));
+        }
+    }
+
+    public function testSerializeParametersForce()
+    {
+        $obj = StripeObject::constructFrom(array(
+            'id' => 'id',
+            'metadata' => StripeObject::constructFrom(array(
                 'bar' => 'foo',
             )),
         ));
-        $obj->metadata = array('baz' => 'foo');
-        $this->assertSame(array('metadata' => array('bar' => '', 'baz' => 'foo')), $obj->serializeParameters());
+
+        $serialized = $obj->serializeParameters(true);
+        $this->assertSame(array('id' => 'id', 'metadata' => array('bar' => 'foo')), $serialized);
     }
 
     public function testDirty()
     {
         $obj = StripeObject::constructFrom(array(
             'id' => 'id',
-            'metadata' => AttachedObject::constructFrom(array(
+            'metadata' => StripeObject::constructFrom(array(
                 'bar' => 'foo',
             )),
         ));
+
+        // note that `$force` and `dirty()` are for different things, but are
+        // functionally equivalent
         $obj->dirty();
-        $this->assertSame(array('id' => 'id', 'metadata' => array('bar' => 'foo')), $obj->serializeParameters());
+
+        $serialized = $obj->serializeParameters();
+        $this->assertSame(array('id' => 'id', 'metadata' => array('bar' => 'foo')), $serialized);
     }
 
     public function testDeepCopy()
