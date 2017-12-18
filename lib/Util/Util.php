@@ -11,8 +11,8 @@ abstract class Util
 
     /**
      * Whether the provided array (or other) is a list rather than a dictionary.
-     * A list is defined as a non-empty array for which all the keys are
-     * consecutive integers starting at 0.
+     * A list is defined as an array for which all the keys are consecutive
+     * integers starting at 0. Empty arrays are considered to be lists.
      *
      * @param array|mixed $array
      * @return boolean true if the given object is a list.
@@ -23,7 +23,7 @@ abstract class Util
             return false;
         }
         if ($array === array()) {
-            return false;
+            return true;
         }
         if (array_keys($array) !== range(0, count($array) - 1)) {
             return false;

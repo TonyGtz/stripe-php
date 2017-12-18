@@ -187,6 +187,10 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
 
         $this->_originalValues = self::deepCopy($values);
 
+        if ($values instanceof StripeObject) {
+            $values = $values->__toArray(true);
+        }
+
         // Wipe old state before setting new.  This is useful for e.g. updating a
         // customer, where there is no persistent card parameter.  Mark those values
         // which don't persist as transient
@@ -217,7 +221,15 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
     public function updateAttributes($values, $opts = null, $dirty = true)
     {
         foreach ($values as $k => $v) {
-            $this->_values[$k] = Util\Util::convertToStripeObject($v, $opts);
+            // Special-case metadata to always be cast as a StripeObject
+            // This is necessary in case metadata is empty, as PHP arrays do
+            // not differentiate between lists and hashes, and we consider
+            // empty arrays to be lists.
+            if ($k === "metadata") {
+                $this->_values[$k] = StripeObject::constructFrom($v, $opts);
+            } else {
+                $this->_values[$k] = Util\Util::convertToStripeObject($v, $opts);
+            }
             if ($dirty) {
                 $this->dirtyValue($this->_values[$k]);
             }
