@@ -175,4 +175,92 @@ class AccountTest extends TestCase
         $resource = Account::createLoginLink(self::TEST_RESOURCE_ID);
         $this->assertSame("Stripe\\LoginLink", get_class($resource));
     }
+
+    public function testSerializeNewAdditionalOwners()
+    {
+        $obj = Util\Util::convertToStripeObject(array(
+            'object' => 'account',
+            'legal_entity' => StripeObject::constructFrom(array()),
+        ), null);
+        $obj->legal_entity->additional_owners = array(
+            array('first_name' => 'Joe'),
+            array('first_name' => 'Jane'),
+        );
+
+        $expected = array(
+            'legal_entity' => array(
+                'additional_owners' => array(
+                    0 => array('first_name' => 'Joe'),
+                    1 => array('first_name' => 'Jane'),
+                ),
+            ),
+        );
+        $this->assertSame($expected, $obj->serializeParameters());
+    }
+
+    public function testSerializePartiallyChangedAdditionalOwners()
+    {
+        $obj = Util\Util::convertToStripeObject(array(
+            'object' => 'account',
+            'legal_entity' => array(
+                'additional_owners' => array(
+                    StripeObject::constructFrom(array('first_name' => 'Joe')),
+                    StripeObject::constructFrom(array('first_name' => 'Jane')),
+                ),
+            ),
+        ), null);
+        $obj->legal_entity->additional_owners[1]->first_name = 'Stripe';
+
+        $expected = array(
+            'legal_entity' => array(
+                'additional_owners' => array(
+                    1 => array('first_name' => 'Stripe'),
+                ),
+            ),
+        );
+        $this->assertSame($expected, $obj->serializeParameters());
+    }
+
+    public function testSerializeUnchangedAdditionalOwners()
+    {
+        $obj = Util\Util::convertToStripeObject(array(
+            'object' => 'account',
+            'legal_entity' => array(
+                'additional_owners' => array(
+                    StripeObject::constructFrom(array('first_name' => 'Joe')),
+                    StripeObject::constructFrom(array('first_name' => 'Jane')),
+                ),
+            ),
+        ), null);
+
+        $expected = array(
+            'legal_entity' => array(
+                'additional_owners' => array(),
+            ),
+        );
+        $this->assertSame($expected, $obj->serializeParameters());
+    }
+
+    public function testSerializeUnsetAdditionalOwners()
+    {
+        $obj = Util\Util::convertToStripeObject(array(
+            'object' => 'account',
+            'legal_entity' => array(
+                'additional_owners' => array(
+                    StripeObject::constructFrom(array('first_name' => 'Joe')),
+                    StripeObject::constructFrom(array('first_name' => 'Jane')),
+                ),
+            ),
+        ), null);
+        $obj->legal_entity->additional_owners = null;
+
+        // Note that the empty string that we send for this one has a special
+        // meaning for the server, which interprets it as an array unset.
+        $expected = array(
+            'legal_entity' => array(
+                'additional_owners' => '',
+            ),
+        );
+        $this->assertSame($expected, $obj->serializeParameters());
+    }
 }

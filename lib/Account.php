@@ -235,4 +235,45 @@ class Account extends ApiResource
     {
         return self::_createNestedResource($id, static::PATH_LOGIN_LINKS, $params, $opts);
     }
+
+    public function serializeParameters($force = false)
+    {
+        $update = parent::serializeParameters($force);
+        if (isset($this->_values['legal_entity'])) {
+            $entity = $this['legal_entity'];
+            if (isset($entity->_values['additional_owners'])) {
+                $owners = $entity['additional_owners'];
+                $entityUpdate = isset($update['legal_entity']) ? $update['legal_entity'] : array();
+                $entityUpdate['additional_owners'] = $this->serializeAdditionalOwners($entity, $owners);
+                $update['legal_entity'] = $entityUpdate;
+            }
+        }
+        return $update;
+    }
+
+    private function serializeAdditionalOwners($legalEntity, $additionalOwners)
+    {
+        if (isset($legalEntity->_originalValues['additional_owners'])) {
+            $originalValue = $legalEntity->_originalValues['additional_owners'];
+        } else {
+            $originalValue = array();
+        }
+        if (($originalValue) && (count($originalValue) > count($additionalOwners))) {
+            throw new InvalidArgumentException(
+                "You cannot delete an item from an array, you must instead set a new array"
+            );
+        }
+
+        $updateArr = array();
+        foreach ($additionalOwners as $i => $v) {
+            $update = ($v instanceof StripeObject) ? $v->serializeParameters() : $v;
+
+            if ($update !== array()) {
+                if (!$originalValue || ($update != $legalEntity->serializeParamsValue($originalValue[$i], null, false, true))) {
+                    $updateArr[$i] = $update;
+                }
+            }
+        }
+        return $updateArr;
+    }
 }
