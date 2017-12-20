@@ -69,7 +69,36 @@ class ApiRequestorTest extends TestCase
         $this->assertSame($headers['Authorization'], 'Bearer ' . $apiKey);
     }
 
-    public function testRaisesInvalidRequestErrorOn400()
+    public function testRaisesIdempotencyErrorOn400OfTypeIdempotencyError()
+    {
+        $this->stubRequest(
+            'POST',
+            '/v1/charges',
+            array(),
+            null,
+            false,
+            array(
+                'error' => array(
+                    'type' => 'idempotency_error',
+                    'message' => "Keys for idempotent requests can only be used with the same parameters they were first used with. Try using a key other than 'abc' if you meant to execute a different request.",
+                ),
+            ),
+            400
+        );
+
+        try {
+            Charge::create();
+            $this->fail("Did not raise error");
+        } catch (Error\Idempotency $e) {
+            $this->assertSame(400, $e->getHttpStatus());
+            $this->assertTrue(is_array($e->getJsonBody()));
+            $this->assertSame("Keys for idempotent requests can only be used with the same parameters they were first used with. Try using a key other than 'abc' if you meant to execute a different request.", $e->getMessage());
+        } catch (\Exception $e) {
+            $this->fail("Unexpected exception: " . get_class($e));
+        }
+    }
+
+    public function testRaisesInvalidRequestErrorOnOther400s()
     {
         $this->stubRequest(
             'POST',
