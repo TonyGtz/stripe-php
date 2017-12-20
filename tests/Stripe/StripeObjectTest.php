@@ -4,6 +4,16 @@ namespace Stripe;
 
 class StripeObjectTest extends TestCase
 {
+    /**
+     * @before
+     */
+    public function setUpReflectors()
+    {
+        // This is used to access the `_opts` protected variable
+        $this->optsReflector = new \ReflectionProperty('Stripe\\StripeObject', '_opts');
+        $this->optsReflector->setAccessible(true);
+    }
+
     public function testArrayAccessorsSemantics()
     {
         $s = new StripeObject();
@@ -185,5 +195,22 @@ class StripeObjectTest extends TestCase
         ), new Util\RequestOptions());
         $obj->metadata = array('baz' => 'foo');
         $this->assertSame(array('metadata' => array('bar' => '', 'baz' => 'foo')), $obj->serializeParameters());
+    }
+
+    public function testIsSerializableAndUnserializable()
+    {
+        $obj = StripeObject::constructFrom(array(
+            'id' => 1,
+            'name' => 'Stripe',
+        ), array(
+            'api_key' => 'apikey',
+        ));
+        $s = unserialize(serialize($obj));
+        $this->assertNotSame($obj, $s);
+        $this->assertSame(1, $s->id);
+        $this->assertSame('Stripe', $s->name);
+        $expectedOpts = Util\RequestOptions::parse(array('api_key' => 'apikey'));
+        $this->assertNotSame($expectedOpts, $this->optsReflector->getValue($s));
+        $this->assertEquals($expectedOpts, $this->optsReflector->getValue($s));
     }
 }

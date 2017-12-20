@@ -4,13 +4,14 @@ namespace Stripe;
 
 use ArrayAccess;
 use InvalidArgumentException;
+use Serializable;
 
 /**
  * Class StripeObject
  *
  * @package Stripe
  */
-class StripeObject implements ArrayAccess, JsonSerializable
+class StripeObject implements ArrayAccess, JsonSerializable, Serializable
 {
     /**
      * @var Util\Set Attributes that should not be sent to the API because
@@ -181,6 +182,17 @@ class StripeObject implements ArrayAccess, JsonSerializable
     public function keys()
     {
         return array_keys($this->_values);
+    }
+
+    // Serializable methods
+    public function serialize()
+    {
+        return serialize(array($this->_values, $this->_opts));
+    }
+
+    public function unserialize($data)
+    {
+        list($this->_values, $this->_opts) = unserialize($data);
     }
 
     /**
