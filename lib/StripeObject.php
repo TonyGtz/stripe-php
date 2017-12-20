@@ -9,6 +9,14 @@ namespace Stripe;
  */
 class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
 {
+    protected $_opts;
+    protected $_originalValues;
+    protected $_values;
+    protected $_unsavedValues;
+    protected $_transientValues;
+    protected $_retrieveOptions;
+    protected $_lastResponse;
+
     /**
      * @return Util\Set Attributes that should not be sent to the API because
      *    they're not updatable (e.g. ID).
@@ -23,32 +31,6 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
         }
         return $permanentAttributes;
     }
-
-    /**
-     * @return object The last response from the Stripe API
-     */
-    public function getLastResponse()
-    {
-        return $this->_lastResponse;
-    }
-
-    /**
-     * @param ApiResponse
-     *
-     * @return void Set the last response from the Stripe API
-     */
-    public function setLastResponse($resp)
-    {
-        $this->_lastResponse = $resp;
-    }
-
-    protected $_opts;
-    protected $_originalValues;
-    protected $_values;
-    protected $_unsavedValues;
-    protected $_transientValues;
-    protected $_retrieveOptions;
-    protected $_lastResponse;
 
     public function __construct($id = null, $opts = null)
     {
@@ -420,7 +402,6 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
         }
     }
 
-
     /**
      * Returns a hash of empty values for all the values that are in the given
      * StripeObject.
@@ -438,5 +419,23 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
         }
         $update = array_fill_keys(array_keys($values), "");
         return $update;
+    }
+
+    /**
+     * @return object The last response from the Stripe API
+     */
+    public function getLastResponse()
+    {
+        return $this->_lastResponse;
+    }
+
+    /**
+     * @param ApiResponse
+     *
+     * @return void Set the last response from the Stripe API
+     */
+    public function setLastResponse($resp)
+    {
+        $this->_lastResponse = $resp;
     }
 }

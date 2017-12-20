@@ -9,6 +9,13 @@ namespace Stripe;
  */
 abstract class ApiResource extends StripeObject
 {
+    /**
+     * @return Stripe\Util\Set A list of fields that can be their own type of
+     * API resource (say a nested card under an account fore xample), and if
+     * that resource is set, it should be transmitted to the API on a create or
+     * update. Doing so is not the default behavior because API resources
+     * should normally be persisted on their own RESTful endpoints.
+     */
     public static function getSavedNestedResources()
     {
         static $savedNestedResources = null;
@@ -18,12 +25,13 @@ abstract class ApiResource extends StripeObject
         return $savedNestedResources;
     }
 
-    private static $HEADERS_TO_PERSIST = array('Stripe-Account' => true, 'Stripe-Version' => true);
-
-    public static function baseUrl()
-    {
-        return Stripe::$apiBase;
-    }
+    /**
+     * @var array A list of headers that should be persisted across requests.
+     */
+    private static $HEADERS_TO_PERSIST = array(
+        'Stripe-Account' => true,
+        'Stripe-Version' => true
+    );
 
     /**
      * @var boolean A flag that can be set a behavior that will cause this
@@ -88,6 +96,14 @@ abstract class ApiResource extends StripeObject
     }
 
     /**
+     * @return string The base URL for the given class.
+     */
+    public static function baseUrl()
+    {
+        return Stripe::$apiBase;
+    }
+
+    /**
      * @return string The endpoint URL for the given class.
      */
     public static function classUrl()
@@ -121,6 +137,11 @@ abstract class ApiResource extends StripeObject
         return static::resourceUrl($this['id']);
     }
 
+    /**
+     * @param array|null|mixed $params The list of parameters to validate
+     *
+     * @throws Stripe\Error\Api if $params exists and is not an array
+     */
     protected static function _validateParams($params = null)
     {
         if ($params && !is_array($params)) {
@@ -132,6 +153,14 @@ abstract class ApiResource extends StripeObject
         }
     }
 
+    /**
+     * @param string $method HTTP method ('get', 'post', etc.)
+     * @param string $url URL for the request
+     * @param array $params list of parameters for the request
+     * @param array|string|null $options
+     *
+     * @return array tuple containing (the JSON response, $options)
+     */
     protected function _request($method, $url, $params = array(), $options = null)
     {
         $opts = $this->_opts->merge($options);
@@ -140,6 +169,14 @@ abstract class ApiResource extends StripeObject
         return array($resp->json, $options);
     }
 
+    /**
+     * @param string $method HTTP method ('get', 'post', etc.)
+     * @param string $url URL for the request
+     * @param array $params list of parameters for the request
+     * @param array|string|null $options
+     *
+     * @return array tuple containing (the JSON response, $options)
+     */
     protected static function _staticRequest($method, $url, $params, $options)
     {
         $opts = Util\RequestOptions::parse($options);
@@ -153,6 +190,13 @@ abstract class ApiResource extends StripeObject
         return array($response, $opts);
     }
 
+    /**
+     * @param string|array $id The ID of the API resource to retrieve, or the
+     *   list of parameters for the request.
+     * @param array|string|null $options
+     *
+     * @return Stripe\ApiResource the retrieved API resource
+     */
     protected static function _retrieve($id, $options = null)
     {
         $opts = Util\RequestOptions::parse($options);
@@ -161,6 +205,12 @@ abstract class ApiResource extends StripeObject
         return $instance;
     }
 
+    /**
+     * @param array $params The list of parameters for the request.
+     * @param array|string|null $options
+     *
+     * @return Stripe\Collection the retrieved list of API resources
+     */
     protected static function _all($params = null, $options = null)
     {
         self::_validateParams($params);
@@ -178,6 +228,12 @@ abstract class ApiResource extends StripeObject
         return $obj;
     }
 
+    /**
+     * @param array $params The list of parameters for the request.
+     * @param array|string|null $options
+     *
+     * @return Stripe\ApiResource the created API resource
+     */
     protected static function _create($params = null, $options = null)
     {
         self::_validateParams($params);
@@ -207,6 +263,11 @@ abstract class ApiResource extends StripeObject
         return $obj;
     }
 
+    /**
+     * @param array|string|null $options
+     *
+     * @return Stripe\ApiResource the updated API resource
+     */
     protected function _save($options = null)
     {
         $params = $this->serializeParameters();
@@ -218,6 +279,12 @@ abstract class ApiResource extends StripeObject
         return $this;
     }
 
+    /**
+     * @param array $params The list of parameters for the request.
+     * @param array|string|null $options
+     *
+     * @return Stripe\ApiResource the deleted API resource
+     */
     protected function _delete($params = null, $options = null)
     {
         self::_validateParams($params);
@@ -234,7 +301,7 @@ abstract class ApiResource extends StripeObject
      * @param array|null $params
      * @param array|string|null $options
      *
-     * @return StripeObject
+     * @return Stripe\StripeObject
      */
     protected static function _nestedResourceOperation($method, $url, $params = null, $options = null)
     {
@@ -268,7 +335,7 @@ abstract class ApiResource extends StripeObject
      * @param array|null $params
      * @param array|string|null $options
      *
-     * @return StripeObject
+     * @return Stripe\StripeObject
      */
     protected static function _createNestedResource($id, $nestedPath, $params = null, $options = null)
     {
@@ -282,7 +349,7 @@ abstract class ApiResource extends StripeObject
      * @param array|null $params
      * @param array|string|null $options
      *
-     * @return StripeObject
+     * @return Stripe\StripeObject
      */
     protected static function _retrieveNestedResource($id, $nestedPath, $nestedId, $params = null, $options = null)
     {
@@ -296,7 +363,7 @@ abstract class ApiResource extends StripeObject
      * @param array|null $params
      * @param array|string|null $options
      *
-     * @return StripeObject
+     * @return Stripe\StripeObject
      */
     protected static function _updateNestedResource($id, $nestedPath, $nestedId, $params = null, $options = null)
     {
@@ -310,7 +377,7 @@ abstract class ApiResource extends StripeObject
      * @param array|null $params
      * @param array|string|null $options
      *
-     * @return StripeObject
+     * @return Stripe\StripeObject
      */
     protected static function _deleteNestedResource($id, $nestedPath, $nestedId, $params = null, $options = null)
     {
@@ -324,7 +391,7 @@ abstract class ApiResource extends StripeObject
      * @param array|null $params
      * @param array|string|null $options
      *
-     * @return StripeObject
+     * @return Stripe\StripeObject
      */
     protected static function _allNestedResources($id, $nestedPath, $params = null, $options = null)
     {

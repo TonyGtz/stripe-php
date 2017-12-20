@@ -16,6 +16,14 @@ class Collection extends StripeObject
 {
     protected $_requestParams = array();
 
+    /**
+     * @param string $method HTTP method ('get', 'post', etc.)
+     * @param string $url URL for the request
+     * @param array $params list of parameters for the request
+     * @param array|string|null $options
+     *
+     * @return array tuple containing (the JSON response, $options)
+     */
     protected function _request($method, $url, $params = array(), $options = null)
     {
         $opts = $this->_opts->merge($options);
@@ -24,6 +32,14 @@ class Collection extends StripeObject
         return array($resp->json, $options);
     }
 
+    /**
+     * @param string $method HTTP method ('get', 'post', etc.)
+     * @param string $url URL for the request
+     * @param array $params list of parameters for the request
+     * @param array|string|null $options
+     *
+     * @return array tuple containing (the JSON response, $options)
+     */
     protected static function _staticRequest($method, $url, $params, $options)
     {
         $opts = Util\RequestOptions::parse($options);
@@ -99,8 +115,7 @@ class Collection extends StripeObject
             // don't interact weirdly with each other.
             $query = array();
             parse_str($url['query'], $query);
-            // PHP 5.2 doesn't support the ?: operator :(
-            $params = array_merge($params ? $params : array(), $query);
+            $params = array_merge($params ?: array(), $query);
         }
 
         return array($url['path'], $params);
