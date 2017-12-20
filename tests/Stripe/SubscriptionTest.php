@@ -85,4 +85,26 @@ class SubscriptionTest extends TestCase
         $resource->deleteDiscount();
         $this->assertSame("Stripe\\Subscription", get_class($resource));
     }
+
+    public function testSerializeParametersItems()
+    {
+        $obj = Util\Util::convertToStripeObject(array(
+            'object' => 'subscription',
+            'items' => Util\Util::convertToStripeObject(array(
+                'object' => 'list',
+                'data' => array(),
+            ), null),
+        ), null);
+        $obj->items = array(
+            array('id' => 'si_foo', 'deleted' => true),
+            array('plan' => 'plan_bar'),
+        );
+        $expected = array(
+            'items' => array(
+                0 => array('id' => 'si_foo', 'deleted' => true),
+                1 => array('plan' => 'plan_bar'),
+            ),
+        );
+        $this->assertSame($expected, $obj->serializeParameters());
+    }
 }

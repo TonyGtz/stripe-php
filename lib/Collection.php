@@ -12,9 +12,30 @@ namespace Stripe;
  *
  * @package Stripe
  */
-class Collection extends ApiResource
+class Collection extends StripeObject
 {
     protected $_requestParams = array();
+
+    protected function _request($method, $url, $params = array(), $options = null)
+    {
+        $opts = $this->_opts->merge($options);
+        list($resp, $options) = static::_staticRequest($method, $url, $params, $opts);
+        $this->setLastResponse($resp);
+        return array($resp->json, $options);
+    }
+
+    protected static function _staticRequest($method, $url, $params, $options)
+    {
+        $opts = Util\RequestOptions::parse($options);
+        $requestor = new ApiRequestor($opts->apiKey);
+        list($response, $opts->apiKey) = $requestor->request($method, $url, $params, $opts->headers);
+        foreach ($opts->headers as $k => $v) {
+            if (!array_key_exists($k, self::$HEADERS_TO_PERSIST)) {
+                unset($opts->headers[$k]);
+            }
+        }
+        return array($response, $opts);
+    }
 
     public function setRequestParams($params)
     {

@@ -106,4 +106,13 @@ class Subscription extends ApiResource
         list($response, $opts) = $this->_request('delete', $url);
         $this->refreshFrom(array('discount' => null), $opts, true);
     }
+
+    public function serializeParameters($force = false)
+    {
+        $update = parent::serializeParameters($force);
+        if ($this->_unsavedValues->includes('items')) {
+            $update['items'] = $this->serializeParamsValue($this->items, null, true, $force, 'items');
+        }
+        return $update;
+    }
 }

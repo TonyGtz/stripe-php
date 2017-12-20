@@ -313,8 +313,9 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
                 return $value;
             } else {
                 throw new \InvalidArgumentException(
-                    "Cannot save property `$key` containing an API resource. It doesn't " .
-                    "appear to be persisted and is not marked as `saveWithParent`."
+                    "Cannot save property `$key` containing an API resource of type " .
+                    get_class($value) . ". It doesn't appear to be persisted and is " .
+                    "not marked as `saveWithParent`."
                 );
             }
         } elseif (is_array($value)) {
@@ -325,7 +326,7 @@ class StripeObject implements \ArrayAccess, \Countable, JsonSerializable
                     array_push($update, $this->serializeParamsValue($v, null, true, $force));
                 }
                 // This prevents an array that's unchanged from being resent.
-                if ($update !== $this->serializeParamsValue($original, null, true, $force)) {
+                if ($update !== $this->serializeParamsValue($original, null, true, $force, $key)) {
                     return $update;
                 }
             } else {
